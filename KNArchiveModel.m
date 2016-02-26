@@ -42,6 +42,7 @@
         id value = [aDecoder decodeObjectForKey:utf8Name];
         [self setValue:value forKey:utf8Name];
     }
+    free(varList);
 }
 
 - (void)encodeWithCoder:(NSCoder *)aCoder {
@@ -58,7 +59,6 @@
 }
 
 - (void)encoderPropertyFromClass:(Class)cls coder:(NSCoder *)aCoder ignorePropertys:(NSArray *)ignorePropertys{
-    
     
     unsigned int count;
     Ivar *varList = class_copyIvarList(cls, &count);
@@ -77,6 +77,7 @@
             [aCoder encodeObject:value forKey:utf8Name];
         }
     }
+    free(varList);
 }
 
 @end
