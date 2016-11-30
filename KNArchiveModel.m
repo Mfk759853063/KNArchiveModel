@@ -15,6 +15,43 @@
     return @[];
 }
 
+- (id)mutableCopyWithZone:(NSZone *)zone {
+    NSArray *ignoreArray = [[self class] kn_ignoredCodingPropertyNames];
+    KNArchiveModel *model = [[self class] new];
+    unsigned int count;
+    Ivar *varList = class_copyIvarList([self class], &count);
+    for (int i = 0 ; i < count; i ++) {
+        Ivar var = varList[i];
+        const char *name = ivar_getName(var);
+        NSString *utf8Name = [NSString stringWithCString:name encoding:NSUTF8StringEncoding];
+        if ([[utf8Name substringWithRange:NSMakeRange(0, 1)] isEqualToString:@"_"]) {
+            utf8Name = [utf8Name substringFromIndex:1];
+        }
+        if ([ignoreArray containsObject:utf8Name]) {
+            continue;
+        }
+        id value = [self valueForKey:utf8Name];
+        if ([value isKindOfClass:[KNArchiveModel class]]) {
+              value = [value mutableCopyWithZone:zone];
+        } else if ([value isKindOfClass:[NSArray class]]) {
+            NSMutableArray *array = @[].mutableCopy;
+            [value enumerateObjectsUsingBlock:^(KNArchiveModel *_Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                [array addObject:[obj mutableCopyWithZone:zone]];
+            }];
+            value = array;
+        }
+        [model setValue:(id)value forKey:utf8Name];
+    }
+    
+    free(varList);
+    return model;
+}
+
+
+- (id)mutableCopy {
+    return [self mutableCopyWithZone:NULL];
+}
+
 - (instancetype)initWithCoder:(NSCoder *)aDecoder {
     
     if (self = [super init]) {
@@ -40,7 +77,10 @@
             utf8Name = [utf8Name substringFromIndex:1];
         }
         id value = [aDecoder decodeObjectForKey:utf8Name];
-        [self setValue:value forKey:utf8Name];
+        if (value) {
+            [self setValue:value forKey:utf8Name];
+        }
+        
     }
     free(varList);
 }
@@ -78,6 +118,21 @@
         }
     }
     free(varList);
+}
+
+- (NSString *)description {
+    NSString *des = @"";
+    unsigned int count;
+    Ivar *varList = class_copyIvarList([self class], &count);
+    for (int i = 0 ; i < count; i ++) {
+        Ivar var = varList[i];
+        const char *name = ivar_getName(var);
+        NSString *utf8Name = [NSString stringWithCString:name encoding:NSUTF8StringEncoding];
+        id value = [self valueForKey:utf8Name];
+        des = [des stringByAppendingString:[NSString stringWithFormat:@"%@:%@\t\n",utf8Name,value]];
+    }
+    free(varList);
+    return des;
 }
 
 @end
