@@ -1,7 +1,7 @@
 
 ##KNArchiveModel是什么?
-一个归档解档模型类,支持对象深拷贝（须继承该类）
+支持对象深拷贝（须继承该类）
 
 ##如何使用？
 id newObject = [Object mutableCopy]
-归档解档自定义模型对象
+配合[KNCache](https://github.com/Mfk759853063/DataCache)使用可以将自定义对象存储在本地.
